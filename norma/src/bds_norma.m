@@ -1,4 +1,4 @@
-function [xopt, fopt, exitflag, output] = bds(fun, x0, options)
+function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %BDS solves unconstrained optimization problems without using derivatives by blockwise direct search methods. 
 %
 %   BDS supports in MATLAB R2017b or later.
