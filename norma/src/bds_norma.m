@@ -12,6 +12,7 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %   Algorithm                   Algorithm to use. It can be "cbds" (cyclic blockwise direct search), 
 %                               "pbds" (randomly permuted blockwise direct search), "rbds" (randomized 
 %                               blockwise direct search), "ds" (the classical direct search without blocks).
+%                               "pads" (parallel blockwise direct search).
 %                               Default: "cbds".
 %   nb                          Number of blocks. A positive integer. Default: n if Algorithm is "cbds", "pbds", 
 %                               or "rbds", 1 if Algorithm is "ds".
@@ -148,8 +149,9 @@ m = size(D, 2);
 if isfield(options, "nb")
     % The number of directions should be greater or equal to the number of blocks.
     nb = min(m, options.nb);
-elseif strcmpi(options.Algorithm, "cbds") || strcmpi(options.Algorithm, "pbds")...
-        || strcmpi(options.Algorithm, "rbds")
+elseif strcmpi(options.Algorithm, "cbds") || strcmpi(options.Algorithm, "pbds") ...
+    || strcmpi(options.Algorithm, "rbds") || strcmpi(options.Algorithm, "pads") ...
+    || strcmpi(options.Algorithm, "sCBDS")
     % Default value is set as n, which is good for canonical with 2n directions. For
     % other situations, other value may be good.
     nb = n;
@@ -353,11 +355,6 @@ if fopt <= ftarget
 end
 
 for iter = 1:maxit
-
-    % % Record the step size used in the previous iteration.
-    % if output_alpha_hist
-    %     alpha_hist(:, iter) = alpha_all;
-    % end
     
     % Permute the blocks every permuting_period iterations if the Algorithm is "pbds".
     % Why iter-1? Since we will permute block_indices at the initial stage.
@@ -387,6 +384,10 @@ for iter = 1:maxit
             block_indices = block_real_indices(idx);
         end
 
+    end
+
+    if strcmpi(options.Algorithm, "sCBDS")
+        block_indices = [1:nb (nb-1):-1:2];
     end
     
     for i = 1:length(block_indices)
@@ -438,9 +439,11 @@ for iter = 1:maxit
             alpha_all(i_real) = shrink * alpha_all(i_real);
         end
 
-        if (reduction_factor(1) <= 0 && sub_fopt < fbase) || sub_fopt + reduction_factor(1) * forcing_function(alpha_all(i_real)) < fbase
-            xbase = sub_xopt;
-            fbase = sub_fopt;
+        if ~strcmpi(options.Algorithm, "pads")
+            if (reduction_factor(1) <= 0 && sub_fopt < fbase) || sub_fopt + reduction_factor(1) * forcing_function(alpha_all(i_real)) < fbase
+                xbase = sub_xopt;
+                fbase = sub_fopt;
+            end
         end
 
         % Update xopt and fopt.
@@ -469,6 +472,17 @@ for iter = 1:maxit
             exitflag = get_exitflag("SMALL_ALPHA");
             break;
         end 
+    end
+
+    % If the algorithm is "pads", then we only update xbase and fbase before the calculation or after, which
+    % implies that in one iteration, each block will use the same xbase and fbase.
+    if strcmpi(options.Algorithm, "pads")
+
+        if (reduction_factor(1) <= 0 && fopt < fbase) || fopt + reduction_factor(1) * forcing_function(min(alpha_all)) < fbase
+            xbase = xopt;
+            fbase = fopt;
+        end
+
     end
     
     % Check whether one of SMALL_ALPHA, MAXFUN_REACHED, and FTARGET_REACHED is reached.
