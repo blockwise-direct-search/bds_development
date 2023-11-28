@@ -371,17 +371,14 @@ for iter = 1:maxit
         if replacement_delay == 0 || iter == 1
             block_indices = random_stream.randi([1, nb]);
         else
-            % Record the number of blocks visited.
-            num_visited = sum(~isnan(block_hist));
-            % Get the number of blocks that we are going to exclude in the block_indices.
-            block_visited_slices_length = min(num_visited, replacement_delay);
-            % Get the indices of blocks that we are going to exclude in the block_indices.
-            block_visited_slices = block_hist(num_visited-block_visited_slices_length+1:num_visited);
-            % Get the indices of blocks that we may visit in this iteration.
-            block_real_indices = block_initial_indices(~ismember(block_indices, block_visited_slices));
-            % Select a block randomly from block_real_indices.
-            idx = random_stream.randi(length(block_real_indices));
-            block_indices = block_real_indices(idx);
+            % Get the block that is going to be visited in this iteration if the Algorithm is "rbds".
+            % This block should not have been visited in the previous replacement_delay iterations.
+            % Note that block_indices is a vector of length 1 in this case.
+            unavailable_block_indices = block_hist(max(1, iter-replacement_delay) : iter - 1);
+            available_block_indices = setdiff(1:nb, unavailable_block_indices);
+            % Select a block randomly from available_block_indices.
+            idx = random_stream.randi(length(available_block_indices));
+            block_indices = available_block_indices(idx);  % a vector of length 1
         end
 
     end

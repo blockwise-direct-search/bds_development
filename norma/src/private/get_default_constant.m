@@ -24,7 +24,7 @@ switch constant_name
     case {"permuting_period"}
         constant_value = 1;
     case {"replacement_delay"}
-        constant_value = 0;
+        constant_value = 1;
     case {"seed"}
         constant_value = "shuffle";
     case {"ftarget"}
