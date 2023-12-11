@@ -17,7 +17,7 @@ function rosenbrock_example()
 
 x0 = [0; 0; 0];  % starting point
 
-%options.maxfun = 1e4;
+%options.MaxFunctionEvaluations = 1e4;
 %options.StepTolerance = eps;
 options.Algorithm = "cbds";
 %options.StepTolerance = 1e-6;

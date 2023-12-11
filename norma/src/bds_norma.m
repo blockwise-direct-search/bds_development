@@ -16,14 +16,14 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %                               Default: "cbds".
 %   nb                          Number of blocks. A positive integer. Default: n if Algorithm is "cbds", "pbds", 
 %                               or "rbds", 1 if Algorithm is "ds".
-%   maxfun                      Maximum of function evaluations. A positive integer. See also maxfun_factor.
-%   maxfun_factor               Factor to define the maximum number of function evaluations as a multiple
-%                               of the dimension of the problem. A positive integer. See also maxfun.
-%                               The maximum of function evaluations is min(maxfun, maxfun_factor*n) if the user
-%                               specify both maxfun and maxfun_factor; it is maxfun if the user only specifies 
-%                               maxfun; it is maxfun_factor*n if the user only specifies maxfun_factor; it is
-%                               min(get_default_constant("maxfun"), get_default_constant("maxfun_factor")*n) if 
-%                               the user specifies neither maxfun nor maxfun_factor.
+%   MaxFunctionEvaluations                      Maximum of function evaluations. A positive integer. See also MaxFunctionEvaluations_factor.
+%   MaxFunctionEvaluations_factor               Factor to define the maximum number of function evaluations as a multiple
+%                               of the dimension of the problem. A positive integer. See also MaxFunctionEvaluations.
+%                               The maximum of function evaluations is min(MaxFunctionEvaluations, MaxFunctionEvaluations_factor*n) if the user
+%                               specify both MaxFunctionEvaluations and MaxFunctionEvaluations_factor; it is MaxFunctionEvaluations if the user only specifies 
+%                               MaxFunctionEvaluations; it is MaxFunctionEvaluations_factor*n if the user only specifies MaxFunctionEvaluations_factor; it is
+%                               min(get_default_constant("MaxFunctionEvaluations"), get_default_constant("MaxFunctionEvaluations_factor")*n) if 
+%                               the user specifies neither MaxFunctionEvaluations nor MaxFunctionEvaluations_factor.
 %   direction_set               A matrix whose columns will be used to define the polling directions. 
 %                               If options does not contain direction_set, then the polling directions will be 
 %                               {e_1, -e_1, ..., e_n, -e_n}. Otherwise, direction_set should be a matrix of n 
@@ -163,20 +163,20 @@ end
 block_indices = 1:nb;
 
 % Set MAXFUN to the maximum number of function evaluations.
-if isfield(options, "maxfun_factor") && isfield(options, "maxfun")
-    maxfun = min(options.maxfun_factor*n, options.maxfun);
-elseif isfield(options, "maxfun_factor")
-    maxfun = options.maxfun_factor*n;
-elseif isfield(options, "maxfun")
-    maxfun = options.maxfun;
+if isfield(options, "MaxFunctionEvaluations_factor") && isfield(options, "MaxFunctionEvaluations")
+    MaxFunctionEvaluations = min(options.MaxFunctionEvaluations_factor*n, options.MaxFunctionEvaluations);
+elseif isfield(options, "MaxFunctionEvaluations_factor")
+    MaxFunctionEvaluations = options.MaxFunctionEvaluations_factor*n;
+elseif isfield(options, "MaxFunctionEvaluations")
+    MaxFunctionEvaluations = options.MaxFunctionEvaluations;
 else
-    maxfun = min(get_default_constant("maxfun"), get_default_constant("maxfun_factor")*n);
+    MaxFunctionEvaluations = min(get_default_constant("MaxFunctionEvaluations"), get_default_constant("MaxFunctionEvaluations_factor")*n);
 end
 
-% Each iteration will at least use one function evaluation. We will perform at most maxfun iterations.
-% We set maxit in the following way to avoid that maxit is reached but maxfun is not exhausted when the 
+% Each iteration will at least use one function evaluation. We will perform at most MaxFunctionEvaluations iterations.
+% We set maxit in the following way to avoid that maxit is reached but MaxFunctionEvaluations is not exhausted when the 
 % algorithm terminates.
-maxit = maxfun;
+maxit = MaxFunctionEvaluations;
 
 % Set the value of reduction factor.
 if isfield(options, "reduction_factor")
@@ -296,7 +296,7 @@ end
 direction_set_indices = divide_direction_set(m, nb);
 
 % Initialize the history of function values.
-fhist = NaN(1, maxfun);
+fhist = NaN(1, MaxFunctionEvaluations);
 
 % Initialize the history of points visited.
 if isfield(options, "output_xhist")
@@ -307,7 +307,7 @@ end
 % If xhist exceeds the maximum of memory size limit, then we will not output xhist.
 if output_xhist
     try
-        xhist = NaN(n, maxfun);
+        xhist = NaN(n, MaxFunctionEvaluations);
     catch
         output_xhist = false;
         warning("xhist will be not included in the output due to the limit of memory.");
@@ -321,7 +321,7 @@ else
 end
 
 % Initialize the history of blocks visited.
-block_hist = NaN(1, maxfun);
+block_hist = NaN(1, MaxFunctionEvaluations);
 
 % To avoid that the users bring some randomized strings.
 if ~isfield(options, "seed")
@@ -401,7 +401,7 @@ for iter = 1:maxit
         % Get indices of directions in the i-th block.
         direction_indices = direction_set_indices{i_real}; 
         
-        suboptions.maxfun = maxfun - nf;
+        suboptions.MaxFunctionEvaluations = MaxFunctionEvaluations - nf;
         suboptions.cycling_inner = cycling_inner;
         suboptions.with_cycling_memory = with_cycling_memory;
         suboptions.reduction_factor = reduction_factor;
