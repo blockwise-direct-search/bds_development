@@ -332,13 +332,13 @@ random_stream = RandStream("mt19937ar", "Seed", options.seed);
 % Initialize the exitflag where the maximum number of iterations is reached. 
 exitflag = get_exitflag("MAXIT_REACHED");
 xbase = x0; 
-fbase = eval_fun(fun, xbase);
+[fbase, fbase_real] = eval_fun(fun, xbase);
 % Set the number of function evaluations.
 nf = 1; 
 if output_xhist
     xhist(:, nf) = xbase;
 end
-fhist(nf) = fbase;
+fhist(nf) = fbase_real;
 xopt = xbase;
 fopt = fbase;
 terminate = false;
