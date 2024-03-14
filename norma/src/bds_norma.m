@@ -104,8 +104,16 @@ end
 x0_is_row = isrow(x0);
 x0 = double(x0(:));
 
+% Set the default value of debug_flag. If options do not contain debug_flag, 
+% then debug_flag is false.
+if isfield(options, "debug_flag")
+    debug_flag = options.debug_flag;
+else
+    debug_flag = false;
+end
+
 % Check the inputs of the user when debug_flag is true.
-if is_debugging()
+if debug_flag
     verify_preconditions(fun, x0, options);
 end
 
@@ -525,6 +533,6 @@ if x0_is_row
 end
 
 % verify_postconditions is to detect whether the output is in the right form when debug_flag is true.
-if is_debugging()
+if debug_flag
     verify_postconditions(fun, xopt, fopt, exitflag, output);
 end
