@@ -170,15 +170,12 @@ end
 % Set indices of blocks as 1:nb.
 block_indices = 1:nb;
 
-% Set MAXFUN to the maximum number of function evaluations.
-if isfield(options, "MaxFunctionEvaluations_factor") && isfield(options, "MaxFunctionEvaluations")
-    MaxFunctionEvaluations = min(options.MaxFunctionEvaluations_factor*n, options.MaxFunctionEvaluations);
-elseif isfield(options, "MaxFunctionEvaluations_factor")
-    MaxFunctionEvaluations = options.MaxFunctionEvaluations_factor*n;
-elseif isfield(options, "MaxFunctionEvaluations")
+% Set the maximum number of function evaluations. If the options do not contain MaxFunctionEvaluations,
+% it is set to MaxFunctionEvaluations_dim_factor*n, where n is the dimension of the problem.
+if isfield(options, "MaxFunctionEvaluations")
     MaxFunctionEvaluations = options.MaxFunctionEvaluations;
 else
-    MaxFunctionEvaluations = min(get_default_constant("MaxFunctionEvaluations"), get_default_constant("MaxFunctionEvaluations_factor")*n);
+    MaxFunctionEvaluations = get_default_constant("MaxFunctionEvaluations_dim_factor")*n;
 end
 
 % Each iteration will at least use one function evaluation. We will perform at most MaxFunctionEvaluations iterations.
