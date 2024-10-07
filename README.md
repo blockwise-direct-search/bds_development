@@ -1,4 +1,4 @@
-This is the arhiva of BDS (https://github.com/blockwise-direct-search/bds). It contains the "norma" and "archiva" versions of BDS. For tests and developments only.
+This is the arhiva of BDS (https://github.com/blockwise-direct-search/bds_matlab). It contains the "norma" and "archiva" versions of BDS. For tests and developments only.
 
 norma: a directory containing a version that will be used as the reference version in the
 development of the new version. "norma" is the Latin word for "standard".
