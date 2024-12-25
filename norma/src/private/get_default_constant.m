@@ -9,10 +9,36 @@ switch constant_name
         constant_value = 500;
     case {"Algorithm"}
         constant_value = "cbds";
-    case {"expand"}
+    case {"is_noisy"}
+        constant_value = false;
+    case {"ds_expand_small"}
+        constant_value = 1.25;
+    case {"ds_shrink_small"}
+        constant_value = 0.4;
+    case {"ds_expand_small_noisy"}
         constant_value = 2;
-    case {"shrink"}
+    case {"ds_shrink_small_noisy"}
         constant_value = 0.5;
+    case {"ds_expand_big"}
+        constant_value = 1.25;
+    case {"ds_shrink_big"}
+        constant_value = 0.4;
+    case {"ds_expand_big_noisy"}
+        constant_value = 1.25;
+    case {"ds_shrink_big_noisy"}
+        constant_value = 0.4;
+    case {"expand_small"}
+        constant_value = 2;
+    case {"shrink_small"}
+        constant_value = 0.5;
+    case {"expand_big"}
+        constant_value = 1.25;
+    case {"shrink_big"}
+        constant_value = 0.65;
+    case {"expand_big_noisy"}
+        constant_value = 1.25;
+    case {"shrink_big_noisy"}
+        constant_value = 0.85;
     case {"reduction_factor"}
         constant_value = [0, eps, eps];
     case {"forcing_function"}
