@@ -9,65 +9,65 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %   XOPT = BDS(FUN, X0, OPTIONS) performs the computations with the options in OPTIONS. OPTIONS should be a
 %   structure with the following fields.
 %
-%   Algorithm                       Algorithm to use. It can be "cbds" (cyclic blockwise direct search), 
-%                                   "pbds" (randomly permuted blockwise direct search), "rbds" (randomized 
-%                                   blockwise direct search), "ds" (the classical direct search without blocks).
-%                                   "pads" (parallel blockwise direct search).
-%                                   Default: "cbds".
-%   nb                              Number of blocks. A positive integer. Default: n if Algorithm is "cbds", "pbds", 
-%                                   or "rbds", 1 if Algorithm is "ds".
-%   MaxFunctionEvaluations          Maximum of function evaluations. A positive integer. See also MaxFunctionEvaluations_factor.
-%   MaxFunctionEvaluations_factor   Factor to define the maximum number of function evaluations as a multiple
-%                                   of the dimension of the problem. A positive integer. See also MaxFunctionEvaluations.
-%                                   The maximum of function evaluations is min(MaxFunctionEvaluations, MaxFunctionEvaluations_factor*n) if the user
-%                                   specify both MaxFunctionEvaluations and MaxFunctionEvaluations_factor; it is MaxFunctionEvaluations if the user only specifies 
-%                                   MaxFunctionEvaluations; it is MaxFunctionEvaluations_factor*n if the user only specifies MaxFunctionEvaluations_factor; it is
-%                                   min(get_default_constant("MaxFunctionEvaluations"), get_default_constant("MaxFunctionEvaluations_factor")*n) if 
-%                                   the user specifies neither MaxFunctionEvaluations nor MaxFunctionEvaluations_factor.
-%   direction_set                   A matrix whose columns will be used to define the polling directions. 
-%                                   If options does not contain direction_set, then the polling directions will be 
-%                                   {e_1, -e_1, ..., e_n, -e_n}. Otherwise, direction_set should be a matrix of n 
-%                                   rows, and the polling directions will be {d_1, -d_1, ..., d_m, -d_m}, where d_i 
-%                                   is the i-th column of direction_set, and m is the number of columns of direction_set.
-%                                   If necessary, we will first extend direction_set by adding some columns to make
-%                                   sure that rank(direction_set) = n, so that the polling directions make a 
-%                                   positive spanning set. See get_direction_set.m for details.
-%   is_noisy                        A flag deciding whether the problem is noisy or not. Default: false.
-%   expand                          Expanding factor of step size. A real number no less than 1.
-%                                   It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
-%   shrink                          Shrinking factor of step size. A positive number less than 1.
-%                                   It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
-%   forcing_function                The forcing function used for deciding whether the step achieves a sufficient
-%                                   decrease. A function handle. Default: @(alpha) alpha^2. See also reduction_factor. 
-%   reduction_factor                Factors multiplied to the forcing function when deciding whether the step achieves
-%                                   a sufficient decrease. A 3-dimentional vector such that 
-%                                   reduction_factor(1) <= reduction_factor(2) <= reduction_factor(3),
-%                                   reduction_factor(1) >= 0, and reduction_factor(2) > 0.
-%                                   reduction_factor(0) is used for deciding whether to update the base point; 
-%                                   reduction_factor(1) is used for deciding whether to shrink the step size; 
-%                                   reduction_factor(2) is used for deciding whether to expand the step size.
-%                                   Default: [0, eps, eps]. See also forcing_function.
-%   StepTolerance                   Lower bound of the step size. If the step size is smaller than StepTolerance,
-%                                   then the algorithm terminates. A (small) positive number. Default: 1e-10.
-%   ftarget                         Target of the function value. If the function value is smaller than or equal to
-%                                   ftarget, then the algorithm terminates. A real number. Default: -Inf.
-%   polling_inner                   Polling strategy in each block. It can be "complete" or "opportunistic". 
-%                                   Default: "opportunistic".
-%   cycling_inner                   Cycling strategy employed within each block. It is used only when polling_inner 
-%                                   is "opportunistic". It can be 0, 1, 2, 3, 4. See cycling.m for details. 
-%                                   Default: 3.
-%   with_cycling_memory             Whether the cycling strategy within each block memorizes the history or not. 
-%                                   It is used only when polling_inner is "opportunistic". Default: true.
-%   permuting_period                It is only used in PBDS, which shuffles the blocks every permuting_period 
-%                                   iterations. A positive integer. Default: 1.   
-%   replacement_delay               It is only used for RBDS. Suppose that replacement_delay is r. If block i
-%                                   is selected at iteration k, then it will not be selected at iterations 
-%                                   k+1, ..., k+r. An integer between 0 and nb-1. Default: 0.
-%   seed                            The seed for permuting blocks in PBDS or randomly choosing one block in RBDS.
-%                                   It is only for reproducibility in experiments. A positive integer.
-%   output_xhist                    Whether to output the history of points visited. Default: false.
-%   output_alpha_hist               Whether to output the history of step sizes. Default: false.
-%   output_block_hist               Whether to output the history of blocks visited. Default: false.
+%   Algorithm                           Algorithm to use. It can be "cbds" (cyclic blockwise direct search), 
+%                                       "pbds" (randomly permuted blockwise direct search), "rbds" (randomized 
+%                                       blockwise direct search), "ds" (the classical direct search without blocks).
+%                                       "pads" (parallel blockwise direct search).
+%                                       Default: "cbds".
+%   nb                                  Number of blocks. A positive integer. Default: n if Algorithm is "cbds", "pbds", 
+%                                       or "rbds", 1 if Algorithm is "ds".
+%   MaxFunctionEvaluations              Maximum of function evaluations. A positive integer. See also MaxFunctionEvaluations_factor.
+%   MaxFunctionEvaluations_dim_factor   Factor to define the maximum number of function evaluations as a multiple
+%                                       of the dimension of the problem. A positive integer. See also MaxFunctionEvaluations.
+%                                       The maximum of function evaluations is min(MaxFunctionEvaluations, MaxFunctionEvaluations_factor*n) if the user
+%                                       specify both MaxFunctionEvaluations and MaxFunctionEvaluations_factor; it is MaxFunctionEvaluations if the user only specifies 
+%                                       MaxFunctionEvaluations; it is MaxFunctionEvaluations_factor*n if the user only specifies MaxFunctionEvaluations_factor; it is
+%                                       min(get_default_constant("MaxFunctionEvaluations"), get_default_constant("MaxFunctionEvaluations_factor")*n) if 
+%                                       the user specifies neither MaxFunctionEvaluations nor MaxFunctionEvaluations_factor.
+%   direction_set                       A matrix whose columns will be used to define the polling directions. 
+%                                       If options does not contain direction_set, then the polling directions will be 
+%                                       {e_1, -e_1, ..., e_n, -e_n}. Otherwise, direction_set should be a matrix of n 
+%                                       rows, and the polling directions will be {d_1, -d_1, ..., d_m, -d_m}, where d_i 
+%                                       is the i-th column of direction_set, and m is the number of columns of direction_set.
+%                                       If necessary, we will first extend direction_set by adding some columns to make
+%                                       sure that rank(direction_set) = n, so that the polling directions make a 
+%                                       positive spanning set. See get_direction_set.m for details.
+%   is_noisy                            A flag deciding whether the problem is noisy or not. Default: false.
+%   expand                              Expanding factor of step size. A real number no less than 1.
+%                                       It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
+%   shrink                              Shrinking factor of step size. A positive number less than 1.
+%                                       It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
+%   forcing_function                    The forcing function used for deciding whether the step achieves a sufficient
+%                                       decrease. A function handle. Default: @(alpha) alpha^2. See also reduction_factor. 
+%   reduction_factor                    Factors multiplied to the forcing function when deciding whether the step achieves
+%                                       a sufficient decrease. A 3-dimentional vector such that 
+%                                       reduction_factor(1) <= reduction_factor(2) <= reduction_factor(3),
+%                                       reduction_factor(1) >= 0, and reduction_factor(2) > 0.
+%                                       reduction_factor(0) is used for deciding whether to update the base point; 
+%                                       reduction_factor(1) is used for deciding whether to shrink the step size; 
+%                                       reduction_factor(2) is used for deciding whether to expand the step size.
+%                                       Default: [0, eps, eps]. See also forcing_function.
+%   StepTolerance                       Lower bound of the step size. If the step size is smaller than StepTolerance,
+%                                       then the algorithm terminates. A (small) positive number. Default: 1e-10.
+%   ftarget                             Target of the function value. If the function value is smaller than or equal to
+%                                       ftarget, then the algorithm terminates. A real number. Default: -Inf.
+%   polling_inner                       Polling strategy in each block. It can be "complete" or "opportunistic". 
+%                                       Default: "opportunistic".
+%   cycling_inner                       Cycling strategy employed within each block. It is used only when polling_inner 
+%                                       is "opportunistic". It can be 0, 1, 2, 3, 4. See cycling.m for details. 
+%                                       Default: 3.
+%   with_cycling_memory                 Whether the cycling strategy within each block memorizes the history or not. 
+%                                       It is used only when polling_inner is "opportunistic". Default: true.
+%   permuting_period                    It is only used in PBDS, which shuffles the blocks every permuting_period 
+%                                       iterations. A positive integer. Default: 1.   
+%   replacement_delay                   It is only used for RBDS. Suppose that replacement_delay is r. If block i
+%                                       is selected at iteration k, then it will not be selected at iterations 
+%                                       k+1, ..., k+r. An integer between 0 and nb-1. Default: 0.
+%   seed                                The seed for permuting blocks in PBDS or randomly choosing one block in RBDS.
+%                                       It is only for reproducibility in experiments. A positive integer.
+%   output_xhist                        Whether to output the history of points visited. Default: false.
+%   output_alpha_hist                   Whether to output the history of step sizes. Default: false.
+%   output_block_hist                   Whether to output the history of blocks visited. Default: false.
 %
 %   [XOPT, FOPT] = BDS(...) returns an approximate minimizer XOPT and its function value FOPT.
 %
@@ -139,6 +139,26 @@ end
 % Get the direction set.
 D = get_direction_set(n, options);
 
+% Get the number of directions.
+m = size(D, 2);
+
+% Get the number of blocks.
+if isfield(options, "nb")
+    % The number of directions should be greater or equal to the number of blocks.
+    nb = min(m, options.nb);
+elseif strcmpi(options.Algorithm, "cbds") || strcmpi(options.Algorithm, "pbds") ...
+    || strcmpi(options.Algorithm, "rbds") || strcmpi(options.Algorithm, "pads") ...
+    || strcmpi(options.Algorithm, "sCBDS")
+    % Default value is set as n, which is good for canonical with 2n directions. For
+    % other situations, other value may be good.
+    nb = n;
+elseif strcmpi(options.Algorithm, "ds")
+    nb = 1;
+end
+
+% Set indices of blocks as 1:nb.
+block_indices = 1:nb;
+
 % Set the default value of noisy.
 if ~isfield(options, "is_noisy")
     options.noisy = get_default_constant("is_noisy");
@@ -176,25 +196,15 @@ else
     end
 end
 
-% Get the number of directions.
-m = size(D, 2);
- 
-% Get the number of blocks.
-if isfield(options, "nb")
-    % The number of directions should be greater or equal to the number of blocks.
-    nb = min(m, options.nb);
-elseif strcmpi(options.Algorithm, "cbds") || strcmpi(options.Algorithm, "pbds") ...
-    || strcmpi(options.Algorithm, "rbds") || strcmpi(options.Algorithm, "pads") ...
-    || strcmpi(options.Algorithm, "sCBDS")
-    % Default value is set as n, which is good for canonical with 2n directions. For
-    % other situations, other value may be good.
-    nb = n;
-elseif strcmpi(options.Algorithm, "ds")
-    nb = 1;
+% Set the value of expand if options contains expand.
+if isfield(options, "expand")
+    expand = options.expand;
 end
 
-% Set indices of blocks as 1:nb.
-block_indices = 1:nb;
+% Set the value of shrink if options contains shrink.
+if isfield(options, "shrink")
+    shrink = options.shrink;
+end
 
 % Set the maximum number of function evaluations. If the options do not contain MaxFunctionEvaluations,
 % it is set to MaxFunctionEvaluations_dim_factor*n, where n is the dimension of the problem.
