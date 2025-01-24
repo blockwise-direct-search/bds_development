@@ -166,7 +166,8 @@ end
 
 % Set the value of expand and shrink according to the dimension of the problem
 % and whether the problem is noisy or not, also according to the Algorithm.
-if strcmpi(options.Algorithm, "ds")
+% n == 1 is treated as a special case, and we consider the Algorithm to be "ds".
+if strcmpi(options.Algorithm, "ds") || n == 1
     if numel(x0) <= 5
         expand = get_default_constant("ds_expand_small");
         shrink = get_default_constant("ds_shrink_small");
@@ -442,6 +443,11 @@ for iter = 1:maxit
         block_indices = [1:nb (nb-1):-1:2];
     end
 
+    % fopt_all(i) records the best function values encountered in the i-th block after one iteration,
+    % and xopt_all(:, i) is the corresponding value of x.
+    fopt_all = NaN(1, length(block_indices));
+    xopt_all = NaN(n, length(block_indices));
+
     for i = 1:length(block_indices)
 
         % If block_indices is 1 3 2, then block_indices(2) = 3, which is the real block that we are
@@ -482,13 +488,17 @@ for iter = 1:maxit
         end
         nf = nf+sub_output.nf;
 
+        % Record the best function value and point encountered in the i_real-th block.
+        fopt_all(i_real) = sub_fopt;
+        xopt_all(:, i_real) = sub_xopt;
+
         % Update the step size, xopt and fopt.
         % fbase and xbase are used for the computation in the block. fopt and
         % xopt are always the best function value and point so far.
         if sub_fopt + reduction_factor(3) * forcing_function(alpha_all(i_real)) < fbase
             alpha_all(i_real) = expand * alpha_all(i_real);
         elseif sub_fopt + reduction_factor(2) * forcing_function(alpha_all(i_real)) >= fbase
-            alpha_all(i_real) = shrink * alpha_all(i_real);
+            alpha_all(i_real) = max(shrink * alpha_all(i_real), 1e-3*alpha_tol);
         end
 
         if ~strcmpi(options.Algorithm, "pads")
@@ -496,12 +506,6 @@ for iter = 1:maxit
                 xbase = sub_xopt;
                 fbase = sub_fopt;
             end
-        end
-
-        % Update xopt and fopt.
-        if sub_fopt < fopt
-            xopt = sub_xopt;
-            fopt = sub_fopt;
         end
 
         % Retrieve the indices of the i_real-th block in the direction set.
@@ -535,6 +539,16 @@ for iter = 1:maxit
             fbase = fopt;
         end
 
+    end
+
+    % Update xopt and fopt. Note that we do this only if the iteration encounters a strictly better point.
+    % Make sure that fopt is always the minimum of fhist after the moment we update fopt.
+    % The determination between fopt_all and fopt is to avoid the case that fopt_all is
+    % bigger than fopt due to the update of xbase and fbase.
+    [~, index] = min(fopt_all, [], "omitnan");
+    if fopt_all(index) < fopt
+        fopt = fopt_all(index);
+        xopt = xopt_all(:, index);
     end
 
     % Check whether one of SMALL_ALPHA, MAXFUN_REACHED, and FTARGET_REACHED is reached.
