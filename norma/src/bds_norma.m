@@ -291,7 +291,7 @@ if strcmpi(options.Algorithm, "rbds")
     if isfield(options, "num_selected_blocks")
         num_selected_blocks = min(options.num_selected_blocks, nb);
     else
-        num_selected_blocks = nb;
+        num_selected_blocks = 1;
     end
 
     if isfield(options, "replacement_delay")
@@ -373,7 +373,6 @@ if isfield(options, "output_block_hist")
 else
     output_block_hist = get_default_constant("output_block_hist");
 end
-
 % Initialize the history of blocks visited.
 block_hist = NaN(1, MaxFunctionEvaluations);
 
@@ -424,7 +423,7 @@ for iter = 1:maxit
         % Make sure that permuting_period is defined when the Algorithm is "pbds".
         block_indices = random_stream.randperm(nb);
     end
-
+    
     % Get the block that is going to be visited if the Algorithm is "rbds".
     if strcmpi(options.Algorithm, "rbds")
         % Get the blocks that are going to be visited in this iteration when the Algorithm is "rbds".
