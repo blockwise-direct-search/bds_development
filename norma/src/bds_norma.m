@@ -407,6 +407,11 @@ if fopt <= ftarget
     maxit = 0;
 end
 
+% fopt_all(i) records the best function values encountered in the i-th block after one iteration,
+% and xopt_all(:, i) is the corresponding value of x.
+fopt_all = NaN(1, length(nb));
+xopt_all = NaN(n, length(nb));
+
 for iter = 1:maxit
 
     if strcmpi(options.Algorithm, "ds") || strcmpi(options.Algorithm, "cbds") ...
@@ -441,11 +446,6 @@ for iter = 1:maxit
     if strcmpi(options.Algorithm, "sCBDS")
         block_indices = [1:nb (nb-1):-1:2];
     end
-
-    % fopt_all(i) records the best function values encountered in the i-th block after one iteration,
-    % and xopt_all(:, i) is the corresponding value of x.
-    fopt_all = NaN(1, length(block_indices));
-    xopt_all = NaN(n, length(block_indices));
 
     for i = 1:length(block_indices)
 
