@@ -299,6 +299,9 @@ if strcmpi(options.Algorithm, "rbds")
     else
         replacement_delay = floor(nb/num_selected_blocks)-1;
     end
+
+    % fprintf("bds_norma.m: expand = %f, shrink = %f, replacement_delay = %d\n", expand, shrink, replacement_delay);
+
 end
 
 % Set the boolean value of WITH_CYCLING_MEMORY.
@@ -409,8 +412,8 @@ end
 
 % fopt_all(i) records the best function values encountered in the i-th block after one iteration,
 % and xopt_all(:, i) is the corresponding value of x.
-fopt_all = NaN(1, length(nb));
-xopt_all = NaN(n, length(nb));
+fopt_all = NaN(1, nb);
+xopt_all = NaN(n, nb);
 
 for iter = 1:maxit
 
