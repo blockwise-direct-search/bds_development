@@ -399,15 +399,17 @@ xopt = xbase;
 fopt = fbase;
 terminate = false;
 
-% Check whether FTARGET is reached by fopt. If it is true, then terminate.
-if fopt <= ftarget
-    information = "FTARGET_REACHED";
-    exitflag = get_exitflag(information);
-
-    % FTARGET has been reached at the very first function evaluation.
+if nf >= MaxFunctionEvaluations || fbase_real <= ftarget
+    % Either MaxFunctionEvaluations has been reached at the very first function evaluation
+    % or FTARGET has been reached at the very first function evaluation.
     % In this case, no further computation should be entertained, and hence,
     % no iteration should be run.
     maxit = 0;
+end
+if fbase_real <= ftarget
+    exitflag = get_exitflag( "FTARGET_REACHED");
+elseif nf >= MaxFunctionEvaluations
+    exitflag = get_exitflag("MAXFUN_REACHED");
 end
 
 % fopt_all(i) records the best function values encountered in the i-th block after one iteration,
