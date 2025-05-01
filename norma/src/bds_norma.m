@@ -507,8 +507,8 @@ for iter = 1:maxit
         if sub_fopt + reduction_factor(3) * forcing_function(alpha_all(i_real)) < fbase
             alpha_all(i_real) = expand * alpha_all(i_real);
         elseif sub_fopt + reduction_factor(2) * forcing_function(alpha_all(i_real)) >= fbase
-            alpha_all(i_real) = max(shrink * alpha_all(i_real), alpha_threshold);
-            %alpha_all(i_real) = shrink * alpha_all(i_real);
+            % alpha_all(i_real) = max(shrink * alpha_all(i_real), alpha_threshold);
+            alpha_all(i_real) = shrink * alpha_all(i_real);
         end
 
         % If the scheme is not "parallel", then we will update xbase and fbase after finishing the
