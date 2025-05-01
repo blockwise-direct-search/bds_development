@@ -514,7 +514,7 @@ for iter = 1:maxit
         % If the scheme is not "parallel", then we will update xbase and fbase after finishing the
         % direct search in the i_real-th block. For "parallel", we will update xbase and fbase after
         % one iteration of the outer loop.
-        if ~strcmpi(scheme, "parallel")
+        if ~strcmpi(options.Algorithm, "pads")
             if update_base
                 xbase = sub_xopt;
                 fbase = sub_fopt;
