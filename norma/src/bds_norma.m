@@ -494,20 +494,19 @@ for iter = 1:maxit
         fopt_all(i_real) = sub_fopt;
         xopt_all(:, i_real) = sub_xopt;
 
-        % Update the step size, xopt and fopt.
+        % Update xbase and fbase first. Then we will update the step size.
         % fbase and xbase are used for the computation in the block. fopt and
         % xopt are always the best function value and point so far.
-        if sub_fopt + reduction_factor(3) * forcing_function(alpha_all(i_real)) < fbase
-            alpha_all(i_real) = expand * alpha_all(i_real);
-        elseif sub_fopt + reduction_factor(2) * forcing_function(alpha_all(i_real)) >= fbase
-            alpha_all(i_real) = max(shrink * alpha_all(i_real), 1e-3*alpha_tol);
-        end
-
         if ~strcmpi(options.Algorithm, "pads")
             if (reduction_factor(1) <= 0 && sub_fopt < fbase) || sub_fopt + reduction_factor(1) * forcing_function(alpha_all(i_real)) < fbase
                 xbase = sub_xopt;
                 fbase = sub_fopt;
             end
+        end
+        if sub_fopt + reduction_factor(3) * forcing_function(alpha_all(i_real)) < fbase
+            alpha_all(i_real) = expand * alpha_all(i_real);
+        elseif sub_fopt + reduction_factor(2) * forcing_function(alpha_all(i_real)) >= fbase
+            alpha_all(i_real) = max(shrink * alpha_all(i_real), 1e-3*alpha_tol);
         end
 
         % Retrieve the indices of the i_real-th block in the direction set.
