@@ -542,17 +542,6 @@ for iter = 1:maxit
         end
     end
 
-    % If the algorithm is "pads", then we only update xbase and fbase before the calculation or after, which
-    % implies that in one iteration, each block will use the same xbase and fbase.
-    if strcmpi(options.Algorithm, "pads")
-
-        if (reduction_factor(1) <= 0 && fopt < fbase) || fopt + reduction_factor(1) * forcing_function(min(alpha_all)) < fbase
-            xbase = xopt;
-            fbase = fopt;
-        end
-
-    end
-
     % Update xopt and fopt. Note that we do this only if the iteration encounters a strictly better point.
     % Make sure that fopt is always the minimum of fhist after the moment we update fopt.
     % The determination between fopt_all and fopt is to avoid the case that fopt_all is
@@ -561,6 +550,15 @@ for iter = 1:maxit
     if fopt_all(index) < fopt
         fopt = fopt_all(index);
         xopt = xopt_all(:, index);
+    end
+
+    % If the algorithm is "pads", then we only update xbase and fbase before the calculation or after, which
+    % implies that in one iteration, each block will use the same xbase and fbase.
+    if strcmpi(options.Algorithm, "pads")
+        if (reduction_factor(1) <= 0 && fopt < fbase) || fopt + reduction_factor(1) * forcing_function(min(alpha_all)) < fbase
+            xbase = xopt;
+            fbase = fopt;
+        end
     end
 
     % Check whether one of SMALL_ALPHA, MAXFUN_REACHED, and FTARGET_REACHED is reached.
