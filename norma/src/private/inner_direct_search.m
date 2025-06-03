@@ -62,6 +62,13 @@ fbase = fopt;
 xbase = xopt;
 
 for j = 1 : num_directions
+
+    if nf >= MaxFunctionEvaluations
+        % Set fnew to fbase and sufficient_decrease to false to avoid using an uninitialized
+        % variable if the termination condition is reached before the first evaluation.
+        fnew = fbase;
+        break;
+    end
     
     % Evaluate the objective function for the current polling direction.
     xnew = xbase+alpha*D(:, j);
