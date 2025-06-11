@@ -113,12 +113,6 @@ if isfield(options, "cycling_inner")
     end
 end
 
-if isfield(options, "with_cycling_memory")
-    if ~islogical(options.with_cycling_memory)
-        error("options.with_cycling_memory should be a logical value.");
-    end
-end
-
 if isfield(options, "output_xhist")
     if ~islogical(options.output_xhist)
         error("options.output_xhist should be a logical value.");

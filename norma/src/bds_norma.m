@@ -56,8 +56,6 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %   cycling_inner                       Cycling strategy employed within each block. It is used only when polling_inner
 %                                       is "opportunistic". It can be 0, 1, 2, 3, 4. See cycling.m for details.
 %                                       Default: 3.
-%   with_cycling_memory                 Whether the cycling strategy within each block memorizes the history or not.
-%                                       It is used only when polling_inner is "opportunistic". Default: true.
 %   permuting_period                    It is only used in PBDS, which shuffles the blocks every permuting_period
 %                                       iterations. A positive integer. Default: 1.
 %   replacement_delay                   It is only used for RBDS. Suppose that replacement_delay is r. If block i
@@ -304,17 +302,6 @@ if strcmpi(options.Algorithm, "rbds")
 
 end
 
-% Set the boolean value of WITH_CYCLING_MEMORY.
-% WITH_CYCLING_MEMORY is only used when we need to permute the directions_indices. If
-% WITH_CYCLING_MEMORY is true, then we will permute the directions_indices by using the
-% directions_indices of the previous iteration. Otherwise, we will permute the directions_indices
-% with the initial directions_indices of ascending orders.
-if isfield(options, "with_cycling_memory")
-    with_cycling_memory = options.with_cycling_memory;
-else
-    with_cycling_memory = get_default_constant("with_cycling_memory");
-end
-
 % Initialize the step sizes and alpha_hist, which is the history of step sizes.
 if isfield(options, "output_alpha_hist")
     output_alpha_hist = options.output_alpha_hist;
@@ -468,7 +455,6 @@ for iter = 1:maxit
 
         suboptions.MaxFunctionEvaluations = MaxFunctionEvaluations - nf;
         suboptions.cycling_inner = cycling_inner;
-        suboptions.with_cycling_memory = with_cycling_memory;
         suboptions.reduction_factor = reduction_factor;
         suboptions.forcing_function = forcing_function;
         suboptions.ftarget = ftarget;

@@ -57,8 +57,6 @@ switch constant_name
         constant_value = "opportunistic";
     case {"cycling_inner"}
         constant_value = 1;
-    case {"with_cycling_memory"}
-        constant_value = true;
     case {"output_xhist"}
         constant_value = false;
     case {"output_alpha_hist"}
