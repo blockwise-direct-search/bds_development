@@ -406,12 +406,17 @@ xopt_all = NaN(n, nb);
 
 for iter = 1:maxit
 
-    if strcmpi(options.Algorithm, "ds") || strcmpi(options.Algorithm, "cbds") ...
-            || strcmpi(options.Algorithm, "pads")
-        % If the Algorithm is "ds", "cbds" or "pads", then we will visit all blocks in order.
+    if strcmpi(options.Algorithm, "ds") || strcmpi(options.Algorithm, "cbds")
+        % If the Algorithm is "ds", "cbds", then we will visit all blocks in order.
         % When the Algorithm is "ds", note that num_blocks = 1 and block_indices = [1],
         % a vector of length 1.
         block_indices = all_block_indices;
+    end
+
+    if strcmpi(options.Algorithm, "pads")
+        % If the Algorithm is "pads", then we will visit all blocks in order.
+        % However, we will permute the blocks every iteration.
+        block_indices = random_stream.randperm(nb, nb);
     end
 
     % Permute the blocks every permuting_period iterations if the Algorithm is "pbds".
