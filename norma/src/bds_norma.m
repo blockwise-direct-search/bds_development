@@ -282,9 +282,8 @@ end
 % iteration. If replacement_delay is r, then the block that is selected in the
 % current iteration will not be selected in the next r iterations. Note that
 % replacement_delay cannot exceed floor(nb/num_selected_blocks)-1.
-% The reason we set the default value of replacement_delay to floor(nb/num_selected_blocks)-1
-% and num_selected_blocks to nb-1 is that the performance of RBDS will be better
-% when replacement_delay is larger.
+% While a larger replacement_delay can potentially improve performance, 
+% we set the default value to 0 to maintain the simplicity and consistency of the algorithm.
 if strcmpi(options.Algorithm, "rbds")
     if isfield(options, "num_selected_blocks")
         num_selected_blocks = min(options.num_selected_blocks, nb);
@@ -295,7 +294,7 @@ if strcmpi(options.Algorithm, "rbds")
     if isfield(options, "replacement_delay")
         replacement_delay = min(options.replacement_delay, floor(nb/num_selected_blocks)-1);
     else
-        replacement_delay = floor(nb/num_selected_blocks)-1;
+        replacement_delay = 0;
     end
 
     % fprintf("bds_norma.m: expand = %f, shrink = %f, replacement_delay = %d\n", expand, shrink, replacement_delay);
@@ -422,8 +421,10 @@ for iter = 1:maxit
     % Permute the blocks every permuting_period iterations if the Algorithm is "pbds".
     % Why iter-1? Since we will permute block_indices at the initial stage.
     if strcmpi(options.Algorithm, "pbds") && mod(iter - 1, permuting_period) == 0
-        % Make sure that permuting_period is defined when the Algorithm is "pbds".
-        block_indices = random_stream.randperm(nb);
+        % Ensure that permuting_period is properly defined when the selected Algorithm is "pbds".
+        % A random permutation of 1:nb is generated using randperm(nb, nb), as the latest version of 
+        % bds.m employs randperm(nb, nb) instead of randperm(nb).
+        block_indices = random_stream.randperm(nb, nb);
     end
     
     % Get the block that is going to be visited if the Algorithm is "rbds".
