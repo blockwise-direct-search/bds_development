@@ -60,7 +60,7 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %                                       iterations. A positive integer. Default: 1.
 %   replacement_delay                   It is only used for RBDS. Suppose that replacement_delay is r. If block i
 %                                       is selected at iteration k, then it will not be selected at iterations
-%                                       k+1, ..., k+r. An integer between 0 and nb-1. Default: 0.
+%                                       k+1, ..., k+r. An integer between 0 and nb-1. Default: floor(nb/num_selected_blocks)-1.
 %   seed                                The seed for permuting blocks in PBDS or randomly choosing one block in RBDS.
 %                                       It is only for reproducibility in experiments. A positive integer.
 %   output_xhist                        Whether to output the history of points visited. Default: false.
@@ -82,7 +82,7 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %
 %   fhist        History of function values.
 %   xhist        History of points visited (if output_xhist is true).
-%   alpha_hist   History of step size for every iteration (if alpha_hist is true).
+%   alpha_hist   History of step size for every iteration (if output_alpha_hist is true).
 %   blocks_hist  History of blocks visited (if block_hist is true).
 %   funcCount    The number of function evaluations.
 %   message      The information of EXITFLAG.
@@ -283,7 +283,8 @@ end
 % current iteration will not be selected in the next r iterations. Note that
 % replacement_delay cannot exceed floor(nb/num_selected_blocks)-1.
 % While a larger replacement_delay can potentially improve performance, 
-% we set the default value to 0 to maintain the simplicity and consistency of the algorithm.
+% we set the default value to floor(nb/num_selected_blocks)-1 to maintain the simplicity and 
+% consistency of the algorithm.
 if strcmpi(options.Algorithm, "rbds")
     if isfield(options, "num_selected_blocks")
         num_selected_blocks = min(options.num_selected_blocks, nb);
@@ -294,7 +295,7 @@ if strcmpi(options.Algorithm, "rbds")
     if isfield(options, "replacement_delay")
         replacement_delay = min(options.replacement_delay, floor(nb/num_selected_blocks)-1);
     else
-        replacement_delay = 0;
+        replacement_delay = floor(nb/num_selected_blocks)-1;
     end
 
     % fprintf("bds_norma.m: expand = %f, shrink = %f, replacement_delay = %d\n", expand, shrink, replacement_delay);
