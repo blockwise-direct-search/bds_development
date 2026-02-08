@@ -63,6 +63,20 @@ switch constant_name
         constant_value = false;
     case {"output_block_hist"}
         constant_value = false;
+    case {"use_function_value_stop"}
+        constant_value = false;
+    case {"func_window_size"}
+        constant_value = 20;
+    case {"func_tol"}
+        constant_value = 1e-6;
+    case {"use_estimated_gradient_stop"}
+        constant_value = false;
+    case {"grad_window_size"}
+        constant_value = 1;
+    case {"grad_tol"}
+        constant_value = 1e-6;
+    case {"output_grad_hist"}
+        constant_value = false;
     otherwise
         error("Unknown constant name")
 end

@@ -57,6 +57,7 @@ xhist = NaN(n, num_directions);
 nf = 0; 
 fbase = fopt;
 xbase = xopt;
+sufficient_decrease = false;
 
 for j = 1 : num_directions
     
@@ -67,8 +68,10 @@ for j = 1 : num_directions
     fhist(nf) = fnew_real;
     xhist(:, nf) = xnew;
 
-    % Update the best point and the best function value.
-    if fnew < fopt
+    % Update the best point and the best function value. We also consider the case that fopt is NaN
+    % and fnew is not NaN, which means that we get a valid function value at the current point and 
+    % this is better than the previous best value (which is NaN).
+    if (fnew < fopt) || (isnan(fopt) && ~isnan(fnew))
         xopt = xnew;
         fopt = fnew;
     end
@@ -79,8 +82,11 @@ for j = 1 : num_directions
         break;
     end
     
-    % Check whether the sufficient decrease condition is achieved.
-    sufficient_decrease = (fnew + reduction_factor(3) * forcing_function(alpha)/2 < fbase);
+    % Check whether the sufficient decrease condition is achieved. Note that we also consider the case 
+    % that fbase is NaN and fnew is not NaN, which means that we get a valid function value at the current
+    % point and this is better than the previous best value (which is NaN).
+    sufficient_decrease = (fnew + reduction_factor(1) * forcing_function(alpha)/2 < fbase) ...
+                        || (isnan(fbase) && ~isnan(fnew));
 
     % In the opportunistic case, if the current iteration achieves sufficient decrease,
     % stop the computations after cycling the indices of the polling directions. The reason  
@@ -109,6 +115,7 @@ output.fhist = fhist(1:nf);
 output.xhist = xhist(:, 1:nf);
 output.nf = nf;
 output.direction_indices = direction_indices;
+output.sufficient_decrease = sufficient_decrease;
 output.terminate = terminate;
 
 end

@@ -70,12 +70,14 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %   [XOPT, FOPT] = BDS(...) returns an approximate minimizer XOPT and its function value FOPT.
 %
 %   [XOPT, FOPT, EXITFLAG] = BDS(...) also returns an EXITFLAG that indicates the exit
-%   condition. The possible values of EXITFLAG are 0, 1, 2, 3.
+%   condition. The possible values of EXITFLAG are 0, 1, 2, 3, 4, and 5.
 %
 %   0    The StepTolerance of the step size is reached.
 %   1    The target of the objective function is reached.
 %   2    The maximum number of function evaluations is reached.
 %   3    The maximum number of iterations is reached.
+%   4    The change of the best function value in the recent iterations is smaller than a threshold.
+%   5    The estimated gradient norm is smaller than a threshold.
 %
 %   [XOPT, FOPT, EXITFLAG, OUTPUT] = BDS(...) returns a
 %   structure OUTPUT with the following fields.
@@ -84,14 +86,17 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %   xhist        History of points visited (if output_xhist is true).
 %   alpha_hist   History of step size for every iteration (if output_alpha_hist is true).
 %   blocks_hist  History of blocks visited (if block_hist is true).
+%   grad_hist    History of gradient norms (if output_grad_hist is true).
 %   funcCount    The number of function evaluations.
 %   message      The information of EXITFLAG.
 %
 %   ***********************************************************************
 %   Authors:    Haitian LI (hai-tian.li@connect.polyu.hk)
-%               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
+%               and Zaikun ZHANG (zhangzaikun@mail.sysu.edu.cn)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
+%               School of Mathematics,
+%               Sun Yat-sen University
 %   ***********************************************************************
 %   All rights reserved.
 %
@@ -136,6 +141,7 @@ end
 
 % Get the direction set.
 D = get_direction_set(n, options);
+positive_direction_set = D(:, 1:2:end);
 
 % Get the number of directions.
 m = size(D, 2);
@@ -372,6 +378,53 @@ if ~isfield(options, "seed")
 end
 random_stream = RandStream("mt19937ar", "Seed", options.seed);
 
+if isfield(options, "use_function_value_stop")
+    use_function_value_stop = options.use_function_value_stop;
+else
+    use_function_value_stop = get_default_constant("use_function_value_stop");
+end
+if isfield(options, "func_window_size")
+    func_window_size = options.func_window_size;
+else
+    func_window_size = get_default_constant("func_window_size");
+end
+if isfield(options, "func_tol")
+    func_tol = options.func_tol;
+else
+    func_tol = get_default_constant("func_tol");
+end
+fopt_window = inf(1, func_window_size);
+
+if isfield(options, "output_grad_hist")
+    output_grad_hist = options.output_grad_hist;
+else
+    output_grad_hist = get_default_constant("output_grad_hist");
+end
+if isfield(options, "use_estimated_gradient_stop")
+    use_estimated_gradient_stop = options.use_estimated_gradient_stop;
+else
+    use_estimated_gradient_stop = get_default_constant("use_estimated_gradient_stop");
+end
+if isfield(options, "grad_window_size")
+    grad_window_size = options.grad_window_size;
+else
+    grad_window_size = get_default_constant("grad_window_size");
+end
+if isfield(options, "grad_tol")
+    grad_tol = options.grad_tol;
+else
+    grad_tol = get_default_constant("grad_tol");
+end
+norm_grad_window = nan(1, grad_window_size);
+record_gradient_norm = false;
+% Initialize gradient history variables and info structure
+grad_hist = [];
+grad_xhist = [];
+grad_iter = [];
+grad_info = struct();
+grad_info.n = n;
+grad_info.complete_direction_set = D;
+
 % Initialize the exitflag where the maximum number of iterations is reached.
 exitflag = get_exitflag("MAXIT_REACHED");
 xbase = x0;
@@ -384,6 +437,9 @@ end
 fhist(nf) = fbase_real;
 xopt = xbase;
 fopt = fbase;
+f0 = fopt;
+fopt_window = [fopt_window(2:end), fopt];
+
 terminate = false;
 
 if nf >= MaxFunctionEvaluations || fbase_real <= ftarget
@@ -446,6 +502,23 @@ for iter = 1:maxit
         block_indices = [1:nb (nb-1):-1:2];
     end
 
+    if exist('available_block_indices','var') == 0
+        available_block_indices = all_block_indices;
+    end
+
+    direction_selection_probability_matrix = get_direction_probability_matrix(n, length(block_indices), ...
+                                            direction_set_indices, available_block_indices);
+    grad_info.direction_selection_probability_matrix = direction_selection_probability_matrix;
+
+    sampled_direction_indices_per_batch = cell(1, length(block_indices));
+    function_values_per_batch = cell(1, length(block_indices));
+    batch_gradient_available = false(1, length(block_indices));
+
+    % The position of the following two variables is different from that in bds.m since
+    % we do not define batch_size in the norma case.
+    grad_info.step_size_per_batch = nan(length(block_indices), 1);
+    grad_info.fbase_per_batch = nan(length(block_indices), 1);
+
     for i = 1:length(block_indices)
 
         % If block_indices is 1 3 2, then block_indices(2) = 3, which is the real block that we are
@@ -459,6 +532,9 @@ for iter = 1:maxit
 
         % Get indices of directions in the i-th block.
         direction_indices = direction_set_indices{i_real};
+
+        grad_info.step_size_per_batch(i) = alpha_all(i_real);
+        grad_info.fbase_per_batch(i) = fbase;
 
         suboptions.MaxFunctionEvaluations = MaxFunctionEvaluations - nf;
         suboptions.cycling_inner = cycling_inner;
@@ -485,6 +561,11 @@ for iter = 1:maxit
         end
         nf = nf+sub_output.nf;
 
+        sampled_direction_indices_per_batch{i} = direction_indices(1:sub_output.nf);
+        function_values_per_batch{i} = sub_output.fhist;
+        batch_gradient_available(i) = (sub_output.nf == length(direction_indices)) && ...
+        ~sub_output.sufficient_decrease;
+
         % Record the best function value and point encountered in the i_real-th block.
         fopt_all(i_real) = sub_fopt;
         xopt_all(:, i_real) = sub_xopt;
@@ -494,15 +575,14 @@ for iter = 1:maxit
 
         % Whether to update xbase and fbase. xbase serves as the "base point" for the computation in the next block,
         % meaning that reduction will be calculated with respect to xbase, as shown above.
-        % Note that their update requires a sufficient decrease if reduction_factor(1) > 0.
-        update_base = (reduction_factor(1) <= 0 && sub_fopt < fbase) ...
-                    || (sub_fopt + reduction_factor(1) * forcing_function(alpha_all(i_real)) < fbase);
-
+        % Although eval_fun.m has dealt with the case that fbase is NaN, we still add the latter
+        % part in the condition to make it more explicit and keep the same with the latest version of bds.m.
+        update_base = (sub_fopt + reduction_factor(1) * forcing_function(alpha_all(i_real)) < fbase) ...
+                    || (isnan(fbase) && ~isnan(sub_fopt));
         % Update the step size alpha_all according to the reduction achieved.
         if sub_fopt + reduction_factor(3) * forcing_function(alpha_all(i_real)) < fbase
             alpha_all(i_real) = expand * alpha_all(i_real);
         elseif sub_fopt + reduction_factor(2) * forcing_function(alpha_all(i_real)) >= fbase
-            % alpha_all(i_real) = max(shrink * alpha_all(i_real), alpha_threshold);
             alpha_all(i_real) = shrink * alpha_all(i_real);
         end
 
@@ -545,12 +625,58 @@ for iter = 1:maxit
         xopt = xopt_all(:, index);
     end
 
+    fopt_window = [fopt_window(2:end), fopt];
+
     % If the algorithm is "pads", then we only update xbase and fbase before the calculation or after, which
     % implies that in one iteration, each block will use the same xbase and fbase.
     if strcmpi(options.Algorithm, "pads")
         if (reduction_factor(1) <= 0 && fopt < fbase) || fopt + reduction_factor(1) * forcing_function(min(alpha_all)) < fbase
             xbase = xopt;
             fbase = fopt;
+        end
+    end
+
+    if use_function_value_stop
+        func_change = max(fopt_window) - min(fopt_window);
+        if func_change < (func_tol * min(1, abs(fopt - f0))) || ...
+                func_change < (1e-3 * func_tol * max(1, abs(fopt - f0)))
+            terminate = true;
+            exitflag = get_exitflag("SMALL_OBJECTIVE_CHANGE");
+        end
+    end
+
+    if all(batch_gradient_available)
+        grad_info.sampled_direction_indices_per_batch = sampled_direction_indices_per_batch;
+        grad_info.function_values_per_batch = function_values_per_batch;
+        grad = estimate_gradient(grad_info);
+        if (norm(grad) <= sqrt(n)*1e30) && (norm(grad) > 10*sqrt(n)*eps)
+            grad_hist = [grad_hist, grad];
+            grad_xhist = [grad_xhist, xbase];
+            grad_iter = [grad_iter, iter];
+
+            if use_estimated_gradient_stop
+                
+                grad_error = get_gradient_error_bound(grad_info.step_size_per_batch, ...
+                                                    length(block_indices), direction_set_indices, n, ...
+                                                    positive_direction_set, ...
+                                                    direction_selection_probability_matrix);
+ 
+                if ~record_gradient_norm
+                    if grad_error < max(1e-3, 1e-1 * norm(grad))
+                        reference_grad_norm = norm(grad);
+                        record_gradient_norm = true;
+                    end
+                else
+                    norm_grad_window = [norm_grad_window(2:end), norm(grad) + grad_error];
+                end
+
+                if record_gradient_norm && all((norm_grad_window < grad_tol * min(1, reference_grad_norm)) ...
+                        | (norm_grad_window < 1e-3 * grad_tol * max(1, reference_grad_norm)))
+                    terminate = true;
+                    exitflag = get_exitflag("SMALL_ESTIMATE_GRADIENT");
+                end
+
+            end
         end
     end
 
@@ -567,6 +693,12 @@ output.fhist = fhist(1:nf);
 
 if output_xhist
     output.xhist = xhist(:, 1:nf);
+end
+
+if output_grad_hist
+    output.grad_hist = grad_hist;
+    output.grad_xhist = grad_xhist;
+    output.grad_iter = grad_iter;
 end
 
 if output_alpha_hist
