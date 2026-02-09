@@ -423,6 +423,7 @@ grad_xhist = [];
 grad_iter = [];
 grad_info = struct();
 grad_info.n = n;
+grad_info.step_size_per_block = alpha_all;
 grad_info.complete_direction_set = D;
 
 % Initialize the exitflag where the maximum number of iterations is reached.
@@ -533,6 +534,7 @@ for iter = 1:maxit
         % Get indices of directions in the i-th block.
         direction_indices = direction_set_indices{i_real};
 
+        grad_info.step_size_per_block(i_real) = alpha_all(i_real);
         grad_info.step_size_per_batch(i) = alpha_all(i_real);
         grad_info.fbase_per_batch(i) = fbase;
 
@@ -656,7 +658,7 @@ for iter = 1:maxit
 
             if use_estimated_gradient_stop
                 
-                grad_error = get_gradient_error_bound(grad_info.step_size_per_batch, ...
+                grad_error = get_gradient_error_bound(grad_info.step_size_per_block, ...
                                                     length(block_indices), direction_set_indices, n, ...
                                                     positive_direction_set, ...
                                                     direction_selection_probability_matrix);
