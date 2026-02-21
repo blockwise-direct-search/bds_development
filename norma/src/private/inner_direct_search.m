@@ -58,15 +58,19 @@ nf = 0;
 fbase = fopt;
 xbase = xopt;
 sufficient_decrease = false;
+invalid_points = [];
 
 for j = 1 : num_directions
     
     % Evaluate the objective function for the current polling direction.
     xnew = xbase+alpha*D(:, j);
-    [fnew, fnew_real] = eval_fun(fun, xnew);
+    [fnew, fnew_real, is_valid] = eval_fun(fun, xnew);
     nf = nf+1;
     fhist(nf) = fnew_real;
     xhist(:, nf) = xnew;
+    if ~is_valid
+        invalid_points = [invalid_points, xnew];
+    end
 
     % Update the best point and the best function value. We also consider the case that fopt is NaN
     % and fnew is not NaN, which means that we get a valid function value at the current point and 
@@ -117,6 +121,7 @@ output.nf = nf;
 output.direction_indices = direction_indices;
 output.sufficient_decrease = sufficient_decrease;
 output.terminate = terminate;
+output.invalid_points = invalid_points;
 
 end
 

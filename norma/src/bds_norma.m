@@ -429,11 +429,15 @@ grad_info.complete_direction_set = D;
 % Initialize the exitflag where the maximum number of iterations is reached.
 exitflag = get_exitflag("MAXIT_REACHED");
 xbase = x0;
-[fbase, fbase_real] = eval_fun(fun, xbase);
+[fbase, fbase_real, is_valid] = eval_fun(fun, xbase);
 % Set the number of function evaluations.
 nf = 1;
 if output_xhist
+    invalid_points = [];
     xhist(:, nf) = xbase;
+    if ~is_valid
+        invalid_points = [invalid_points, xbase];
+    end
 end
 fhist(nf) = fbase_real;
 xopt = xbase;
@@ -560,6 +564,7 @@ for iter = 1:maxit
         % Accumulate the points visited by inner_direct_search.
         if output_xhist
             xhist(:, (nf+1):(nf+sub_output.nf)) = sub_output.xhist;
+            invalid_points = [invalid_points, sub_output.invalid_points];
         end
         nf = nf+sub_output.nf;
 
@@ -695,6 +700,7 @@ output.fhist = fhist(1:nf);
 
 if output_xhist
     output.xhist = xhist(:, 1:nf);
+    output.invalid_points = invalid_points;
 end
 
 if output_grad_hist
