@@ -34,9 +34,9 @@ function [xopt, fopt, exitflag, output] = bds_norma(fun, x0, options)
 %                                       positive spanning set. See get_direction_set.m for details.
 %   is_noisy                            A flag deciding whether the problem is noisy or not. Default: false.
 %   expand                              Expanding factor of step size. A real number no less than 1.
-%                                       It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
+%                                       Its default value depends only on whether the problem is noisy.
 %   shrink                              Shrinking factor of step size. A positive number less than 1.
-%                                       It depends on the dimension of the problem and the algorithm and whether the problem is noisy.
+%                                       Its default value depends only on whether the problem is noisy.
 %   forcing_function                    The forcing function used for deciding whether the step achieves a sufficient
 %                                       decrease. A function handle. Default: @(alpha) alpha^2. See also reduction_factor.
 %   reduction_factor                    Factors multiplied to the forcing function when deciding whether the step achieves
@@ -165,40 +165,17 @@ all_block_indices = 1:nb;
 
 % Set the default value of noisy.
 if ~isfield(options, "is_noisy")
-    options.noisy = get_default_constant("is_noisy");
+    options.is_noisy = get_default_constant("is_noisy");
 end
 
-% Set the value of expand and shrink according to the dimension of the problem
-% and whether the problem is noisy or not, also according to the Algorithm.
-% n == 1 is treated as a special case, and we consider the Algorithm to be "ds".
-if strcmpi(options.Algorithm, "ds") || n == 1
-    if numel(x0) <= 5
-        expand = get_default_constant("ds_expand_small");
-        shrink = get_default_constant("ds_shrink_small");
-    else
-        % Judge whether the problem is noisy or not.
-        if isfield(options, "is_noisy") && options.is_noisy
-            expand = get_default_constant("ds_expand_big_noisy");
-            shrink = get_default_constant("ds_shrink_big_noisy");
-        else
-            expand = get_default_constant("ds_expand_big");
-            shrink = get_default_constant("ds_shrink_big");
-        end
-    end
+% Set default expand and shrink values.
+% The defaults depend only on whether the problem is noisy.
+if isfield(options, "is_noisy") && options.is_noisy
+    expand = get_default_constant("expand_noisy");
+    shrink = get_default_constant("shrink_noisy");
 else
-    if numel(x0) <= 5
-        expand = get_default_constant("expand_small");
-        shrink = get_default_constant("shrink_small");
-    else
-        % Judge whether the problem is noisy or not.
-        if isfield(options, "is_noisy") && options.is_noisy
-            expand = get_default_constant("expand_big_noisy");
-            shrink = get_default_constant("shrink_big_noisy");
-        else
-            expand = get_default_constant("expand_big");
-            shrink = get_default_constant("shrink_big");
-        end
-    end
+    expand = get_default_constant("expand");
+    shrink = get_default_constant("shrink");
 end
 
 % Set the value of expand if options contains expand.
